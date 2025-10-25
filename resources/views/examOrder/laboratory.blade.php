@@ -596,6 +596,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Get reg_no from URL or pass it from controller
+            const regNo = '{{ $reg_no ?? "" }}';
+            const regNoUrlFormat = regNo.replace(/\//g, '+'); // Convert / to + for URLs
+            
             // Setup AJAX with CSRF token
             $.ajaxSetup({
                 headers: {
@@ -682,7 +686,7 @@
                 showLoading(true);
                 
                 $.ajax({
-                    url: '/laboratory/orders',
+                    url: '/laboratory/orders/' + regNoUrlFormat,
                     method: 'GET',
                     dataType: 'json',
                     success: function(response) {
@@ -693,7 +697,7 @@
                     },
                     error: function(xhr, status, error) {
                         console.error('Error loading test orders:', error);
-                        showError('Failed to load test orders. Using cached data.');
+                        showError('Failed to load test orders. ' + (xhr.responseJSON?.message || ''));
                         showLoading(false);
                     }
                 });
@@ -703,22 +707,36 @@
             function loadTestResults() {
                 showLoading(true);
                 
-                $.ajax({
-                    url: '/laboratory/results',
-                    method: 'GET',
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success && response.data) {
-                            renderTestResults(response.data);
+                // Load all results (from all orders for this patient)
+                if (regNoUrlFormat) {
+                    // Get first order's results or show empty state
+                    $.ajax({
+                        url: '/laboratory/orders/' + regNoUrlFormat,
+                        method: 'GET',
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success && response.data && response.data.length > 0) {
+                                // Load results for first order
+                                loadTestResultsByOrder(response.data[0].id);
+                            } else {
+                                $('#resultsTableBody').html(
+                                    '<tr><td colspan="9" class="text-center text-muted py-4">' +
+                                    '<i class="fas fa-info-circle"></i> No laboratory orders found for this patient.' +
+                                    '</td></tr>'
+                                );
+                                showLoading(false);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error loading initial results:', error);
+                            showError('Failed to load test results.');
+                            showLoading(false);
                         }
-                        showLoading(false);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error loading test results:', error);
-                        showError('Failed to load test results. Using cached data.');
-                        showLoading(false);
-                    }
-                });
+                    });
+                } else {
+                    showError('Registration number not found.');
+                    showLoading(false);
+                }
             }
 
             // Render test orders
@@ -837,9 +855,8 @@
                 showLoading(true);
                 
                 $.ajax({
-                    url: '/laboratory/testbydate',
+                    url: '/laboratory/testbydate/' + orderId,
                     method: 'GET',
-                    data: { id: orderId },
                     dataType: 'json',
                     success: function(response) {
                         if (response.success) {

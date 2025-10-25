@@ -246,35 +246,32 @@
         
         <div class="sidebar" id="sidebar">
             <div class="patient-info text-center">
-                <h5 class="mb-2">ANTONIUS KRISTIYANTO</h5>
+                <h5 class="mb-2">{{ strtoupper($patient->name ?? 'N/A') }}</h5>
                 <img src="https://static.vecteezy.com/system/resources/thumbnails/026/375/249/small_2x/ai-generative-portrait-of-confident-male-doctor-in-white-coat-and-stethoscope-standing-with-arms-crossed-and-looking-at-camera-photo.jpg" alt="Patient Photo" class="img-thumbnail mb-2">
                 <table class="table table-sm table-borderless text-left mt-2" style="font-size: 0.75rem;">
-                    <tr><td><strong>MRN</strong></td><td>: 071930</td></tr>
-                    <tr><td><strong>Reg. No</strong></td><td>: REG/EM/251014-0008</td></tr>
-                    <tr><td><strong>Reg. Date</strong></td><td>: 14-Oct-2025</td></tr>
-                    <tr><td><strong>Gender</strong></td><td>: Male</td></tr>
-                    <tr><td><strong>DOB</strong></td><td>: 17-Jun-1971 (54y 3m 27d)</td></tr>
-                    <tr><td><strong>Guarantor</strong></td><td>: BPJS KESEHATAN</td></tr>
-                    <tr><td><strong>Unit</strong></td><td>: IGD</td></tr>
-                    <tr><td><strong>Physician</strong></td><td>: dr. Daniel Sutanto</td></tr>
+                    <tr><td><strong>MRN</strong></td><td>: {{ $patient->mrn ?? '-' }}</td></tr>
+                    <tr><td><strong>Reg. No</strong></td><td>: {{ $patient->reg_no ?? '-' }}</td></tr>
+                    <tr><td><strong>Reg. Date</strong></td><td>: {{ $patient->reg_date ? \Carbon\Carbon::parse($patient->reg_date)->format('d-M-Y') : '-' }}</td></tr>
+                    <tr><td><strong>Gender</strong></td><td>: {{ $patient->gender ?? '-' }}</td></tr>
+                    <tr><td><strong>DOB</strong></td><td>: {{ $patient->dob ? \Carbon\Carbon::parse($patient->dob)->format('d-M-Y') : '-' }} ({{ $age }})</td></tr>
+                    <tr><td><strong>Guarantor</strong></td><td>: {{ $patient->guarantor ?? '-' }}</td></tr>
+                    <tr><td><strong>Unit</strong></td><td>: {{ $patient->unit ?? '-' }}</td></tr>
+                    <tr><td><strong>Physician</strong></td><td>: {{ $patient->physician ?? '-' }}</td></tr>
                 </table>
             </div>
 
             <div class="section-title">Billing Summary</div>
             <div class="p-2" style="font-size: 0.85rem;">
-                <strong>Plafond :</strong> <span class="float-right">10,000.00</span><br>
-                <strong>Billing :</strong> <span class="float-right">1,566,426.33</span><br>
-                <strong>Selisih :</strong> <span class="float-right text-danger">-1,556,426.33</span>
+                <strong>Plafond :</strong> <span class="float-right">{{ number_format($billing['plafond'], 2) }}</span><br>
+                <strong>Billing :</strong> <span class="float-right">{{ number_format($billing['total'], 2) }}</span><br>
+                <strong>Selisih :</strong> <span class="float-right {{ $billing['selisih'] < 0 ? 'text-danger' : 'text-success' }}">{{ number_format($billing['selisih'], 2) }}</span>
             </div>
 
             <div class="section-title">Allergies</div>
             <div class="p-2 text-muted" style="font-size: 0.85rem;">- None recorded</div>
 
             <div class="section-title">Diagnosis</div>
-            <div class="p-2" style="font-size: 0.85rem;">
-                <strong>Main:</strong><p class="mb-1">obs hemiparesa sinistra c.c CVA</p>
-                <strong>Secondary:</strong><p class="mb-0">HHD DM</p>
-            </div>
+            <div class="p-2 text-muted" style="font-size: 0.85rem;">- No diagnosis recorded</div>
 
             <div class="section-title">Vital Signs</div>
             <table class="table table-sm vital-signs-table">
@@ -282,14 +279,23 @@
                     <tr><th>Vital</th><th>Value</th><th>Time</th><th></th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>SpO2</td><td>98 %</td><td>09:37</td><td><i class="fas fa-chart-line text-success"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
-                    <tr><td>Weight</td><td>0 Kg</td><td>07:56</td><td><i class="fas fa-chart-bar text-info"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
-                    <tr><td>Height</td><td>0 Cm</td><td>07:56</td><td><i class="fas fa-chart-area text-warning"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
-                    <tr><td>GCS Total</td><td>15</td><td>09:34</td><td><i class="fas fa-chart-bar text-info"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
-                    <tr><td>BP Sistolic</td><td>149 mmHg</td><td>09:37</td><td><i class="fas fa-chart-line text-success"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
-                    <tr><td>BP Diastolic</td><td><span class="price-highlight">88 mmHg</span></td><td>09:34</td><td><i class="fas fa-chart-bar text-info"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
-                    <tr><td>Heart Rate</td><td>81 x/mnt</td><td>09:37</td><td><i class="fas fa-chart-area text-warning"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
-                    <tr><td>Resp. Rate</td><td>20 x/mnt</td><td>09:37</td><td><i class="fas fa-chart-pie text-danger"></i> <i class="fas fa-edit text-primary ml-1"></i></td></tr>
+                    @if(count($vitalSigns) > 0)
+                        @foreach($vitalSigns as $vital)
+                        <tr>
+                            <td>{{ $vital->name }}</td>
+                            <td>{{ $vital->value }} {{ $vital->unit }}</td>
+                            <td>{{ $vital->time ? \Carbon\Carbon::parse($vital->time)->format('H:i') : '-' }}</td>
+                            <td>
+                                <i class="fas fa-chart-line text-success"></i> 
+                                <i class="fas fa-edit text-primary ml-1"></i>
+                            </td>
+                        </tr>
+                        @endforeach
+                    @else
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No vital signs recorded</td>
+                    </tr>
+                    @endif
                 </tbody>
             </table>
             
@@ -327,7 +333,7 @@
                                 <div class="card-body p-0">
                                     <div id="lab-iframe-container" class="iframe-container position-relative">
                                             <iframe id="lab-iframe"
-                                                    src="{{ route('laboratory') }}"
+                                                    src="{{ route('laboratory', ['reg_no' => str_replace('/', '+', $patient->reg_no)]) }}"
                                                     frameborder="0"
                                                     style="width: 100%; height: 80vh; border: none; display: none;"
                                                     onload="this.style.display='block'"

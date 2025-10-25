@@ -2,43 +2,34 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EmrController;
+use App\Http\Controllers\LaboratoryController;
 
-// Route untuk halaman EMR
-Route::get('/emr', function () {
-    // DUMMY
-    $patient = (object) [
-        'name' => 'Dummy Patient',
-        'mrn' => '-',
-        'reg_no' => '-',
-        'reg_date' => '-',
-        'gender' => 'Male',
-        'dob' => '1971-06-17',
-        'guarantor' => 'BPJS KESEHATAN',
-        'bpjs_sep_no' => '0151R014102SV007906',
-        'cov_class' => 'Rawat Jalan',
-        'unit' => 'IGD',
-        'physician' => 'dr. Daniel Sutanto'
-    ];
+// EMR Routes - Use + for slashes in URL (REG+EM+251014-0008)
+Route::get('/emr/{reg_no}', [EmrController::class, 'show'])
+    ->name('emr.show')
+    ->where('reg_no', '.*'); // Allow any character
 
-    $age = '54y 3m 27d';
+// Laboratory Routes - Use + for slashes in URL
+Route::get('/examOrder/laboratory/{reg_no}', [LaboratoryController::class, 'index'])
+    ->name('laboratory')
+    ->where('reg_no', '.*');
 
-    $vitalSigns = collect([
-        (object) ['date' => '2025-10-14', 'time' => '09:37', 'value' => '98 %', 'unit' => ''],
-        (object) ['date' => '2025-10-14', 'time' => '07:56', 'value' => '0 Kg', 'unit' => ''],
-        (object) ['date' => '2025-10-14', 'time' => '07:56', 'value' => '0 Cm', 'unit' => ''],
-        (object) ['date' => '2025-10-14', 'time' => '09:34', 'value' => '[4] Spontan', 'unit' => ''],
-        (object) ['date' => '2025-10-14', 'time' => '09:34', 'value' => '[8] Mengikuti Perintah', 'unit' => ''],
-        (object) ['date' => '2025-10-14', 'time' => '09:34', 'value' => '[5] Berorientasi', 'unit' => ''],
-        (object) ['date' => '2025-10-14', 'time' => '09:34', 'value' => '15', 'unit' => '']
-    ]);
+// Laboratory API Routes
+Route::get('/laboratory/orders/{reg_no}', [LaboratoryController::class, 'orders'])
+    ->name('laboratory.orders')
+    ->where('reg_no', '.*');
 
-    return view('index', compact('patient', 'age', 'vitalSigns'));
-});
+Route::get('/laboratory/results/{lab_id}', [LaboratoryController::class, 'results'])
+    ->name('laboratory.results');
 
-Route::get('/examOrder/laboratory', function() {
-    return view('examOrder.laboratory');
-})->name('laboratory');
+Route::get('/laboratory/search', [LaboratoryController::class, 'search'])
+    ->name('laboratory.search');
 
+Route::get('/laboratory/testbydate/{lab_id}', [LaboratoryController::class, 'testByDate'])
+    ->name('laboratory.testbydate');
+
+// Radiology Routes (keeping existing functionality)
 // Route untuk menampilkan halaman (view)
 Route::get('examOrder/radiologyAndImaging', function () {
     return view('examOrder.radiologyAndImaging');
@@ -98,28 +89,11 @@ Route::get('/radiology/search', function (Request $request) {
 })->name('radiology.search');
 
 
-// AJAX Routes for Laboratory (Tidak ada perubahan)
-Route::get('/laboratory/orders', function () {
-    $orders = [
-        [
-            'id' => 1, 'date' => '14/10/2025 09:14', 'req_no' => 'REG/IP/2251014-0012',
-            'tx_no' => 'JDG2101L4-00083', 'from' => 'SAKURA 12', 'doctor' => 'dr. Erwin Widi Nugroho, SpN',
-            'urgent' => true, 'items' => ['Gula Darah Sewaktu (Strip)'], 'price' => 'Rp. 29,625.00'
-        ],
-        [
-            'id' => 2, 'date' => '14/10/2025 08:47', 'req_no' => 'REG/EM/2251014-0008',
-            'tx_no' => 'JDG2101L4-00082', 'from' => 'KLINIK PENYAKIT DALAM', 'doctor' => 'dr. Daniel Subroto',
-            'urgent' => true, 'items' => ['K (Kalium): 1.00 x ⚗️', 'Na (Natrium): 1.00 x ⚗️', 'Ureum: 1.00 x ⚗️', 'Paket Hemat 2 (HB,HTC,TR,DIFF,ER,LINDEX): 1.00 x ⚗️', 'Creatinine: 1.00 x ⚗️', 'Gula Darah Sewaktu (Strip): 1.00 x ⚗️'],
-            'price' => 'Rp. 388,223.00'
-        ],
-        [
-            'id' => 3, 'date' => '19/08/2023 17:14', 'req_no' => 'REG/OP/230819-0876',
-            'tx_no' => 'JDG2081B-00280', 'from' => 'KLINIK PENYAKIT DALAM', 'doctor' => '',
-            'urgent' => false, 'items' => [], 'price' => ''
-        ]
-    ];
-    return response()->json(['success' => true, 'data' => $orders]);
-});
+
+
+// AJAX Routes for Laboratory (Removed - now handled by LaboratoryController)
+
+// Radiology Routes (keeping existing functionality)
 
 Route::get('/laboratory/results', function () {
     $results = [
