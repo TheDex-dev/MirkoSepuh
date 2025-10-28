@@ -23,7 +23,6 @@ class DatabaseSeeder extends Seeder
             VitalSignsSeeder::class,
             RadiologyOrdersSeeder::class,
             LabOrdersSeeder::class,
-            LabResultsSeeder::class,
             JobOrderSeeder::class,
             JobOrderDetailSeeder::class,
         ]);
