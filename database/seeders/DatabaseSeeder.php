@@ -13,6 +13,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        // Seed in order to respect foreign key constraints
+        $this->call([
+            PatientsSeeder::class,
+            RegistrationsSeeder::class,
+            LabOrdersSeeder::class,
+            LabResultsSeeder::class,
+            VitalSignsSeeder::class,
+            RadiologyOrdersSeeder::class,
+        ]);
     }
 }
