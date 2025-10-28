@@ -186,76 +186,51 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 $(document).ready(function() {
     
     /**
      * @fileoverview Mengelola pengambilan, penampilan, dan pemfilteran data radiologi.
-     * Skrip ini mengambil semua data order radiologi saat halaman dimuat, menampilkannya dalam tabel,
-     * dan menyediakan fungsionalitas pencarian real-time. Teks pencarian dikirim ke server
-     * untuk mendapatkan daftar ID yang cocok, yang kemudian digunakan untuk memfilter data di sisi klien (browser).
+     * Skrip ini mengambil data order radiologi untuk pasien saat ini (berdasarkan reg_no),
+     * menampilkannya dalam tabel, dan menyediakan fungsionalitas pencarian client-side.
      */
 
     // ===================================================================================
     // VARIABEL PENYIMPANAN & ELEMEN DOM
     // ===================================================================================
 
-    /**
-     * Menyimpan array utama dari semua objek order radiologi yang diambil dari server.
-     * Cache lokal ini digunakan untuk memfilter dan merender ulang tampilan tanpa perlu panggilan tambahan ke server.
-     * @type {Array<Object>}
-     */
+    const regNo = '{{ $reg_no ?? "" }}';
+    const regNoUrlFormat = regNo.replace(/\//g, '+');
+
     let allRadiologyData = [];
 
-    /**
-     * Menyimpan array nomor registrasi (`reg_no`) yang cocok dengan query pencarian saat ini.
-     * Jika nilainya `null`, berarti tidak ada filter pencarian yang aktif.
-     * Jika nilainya berupa array (bahkan array kosong), berarti filter pencarian sedang aktif.
-     * @type {Array<string>|null}
-     */
-    let activeSearchRegNos = null;
+    // HAPUS: 'activeSearchRegNos' tidak lagi diperlukan untuk logika baru
+    // let activeSearchRegNos = null; 
     
-    /**
-     * Objek jQuery yang menyimpan elemen body tabel untuk meningkatkan performa.
-     * Menghindari pencarian DOM berulang kali.
-     * @type {jQuery}
-     */
     const tableBody = $('.results-table tbody');
-    
-    /**
-     * Objek jQuery yang menyimpan elemen input pencarian.
-     * @type {jQuery}
-     */
     const searchInput = $('#search-input');
 
     // ===================================================================================
     // FUNGSI UTAMA
     // ===================================================================================
 
-    /**
-     * Merender (mengubah) array objek order menjadi baris tabel HTML dan menambahkannya ke body tabel.
-     * Fungsi ini bertanggung jawab untuk membuat konten tabel secara dinamis.
-     * @param {Array<Object>} dataToRender Array berisi objek order radiologi yang akan ditampilkan.
-     */
     function renderTable(dataToRender) {
-        // Kosongkan konten sebelumnya sebelum merender data baru.
         tableBody.empty();
 
         if (dataToRender.length > 0) {
             $.each(dataToRender, function(index, order) {
-                // Membuat HTML untuk daftar item order.
                 let itemsHtml = '<ul>';
                 $.each(order.items, function(i, item) { itemsHtml += `<li>${item}</li>`; });
                 itemsHtml += '</ul>';
 
-                // Membuat HTML untuk kontainer gambar RIS/PACS.
                 let imagesHtml = '<div class="result-image-container">';
                 $.each(order.images, function(i, image) {
                     imagesHtml += `<img src="${image}" alt="RIS/PACS Image" class="result-image" data-toggle="modal" data-target="#imageModal" data-image="${image}">`;
                 });
                 imagesHtml += '</div>';
 
-                // Struktur HTML lengkap untuk satu baris tabel.
                 const row = `
                     <tr>
                         <td data-label="Date" class="text-center"><div class="date-time">${order.date}<br><small class="text-muted">${order.time}</small></div></td>
@@ -266,63 +241,72 @@ $(document).ready(function() {
                 tableBody.append(row);
             });
         } else {
-            // Tampilkan pesan jika tidak ada data untuk ditampilkan.
             tableBody.html('<tr><td colspan="4" class="text-center text-muted p-5">Data tidak ditemukan.</td></tr>');
         }
-        // Pasang kembali event listener ke elemen yang baru dibuat (seperti gambar).
         initializeEventListeners();
     }
     
-    /**
-     * Mengambil daftar lengkap data radiologi dari server.
-     * Fungsi ini biasanya hanya dipanggil sekali saat halaman dimuat atau saat di-refresh manual.
-     */
     function initialDataLoad() {
-        // Tampilkan indikator loading kepada pengguna.
         tableBody.html('<tr id="loading-row"><td colspan="4" class="text-center p-5"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div><p class="mt-2 mb-0 text-muted">Memuat data...</p></td></tr>');
         
+        if (!regNoUrlFormat) {
+            tableBody.html('<tr><td colspan="4" class="text-center text-danger p-5">Gagal memuat data: No Registrasi tidak ditemukan.</td></tr>');
+            return;
+        }
+
         $.ajax({
-            url: "{{ route('radiology.data') }}",
+            url: "/radiology/data/" + regNoUrlFormat,
             success: function(response) {
                 if (response.success && response.data) {
-                    // Simpan data yang diambil ke dalam cache lokal.
                     allRadiologyData = response.data;
-                    // Terapkan filter untuk merender semua data di awal.
                     applyFilters();
                 }
             },
             error: function() {
-                // Tampilkan pesan error jika panggilan AJAX gagal.
                 tableBody.html('<tr><td colspan="4" class="text-center text-danger p-5">Gagal memuat data.</td></tr>');
             }
         });
     }
 
     /**
-     * Memfilter array utama `allRadiologyData` berdasarkan hasil pencarian yang aktif,
-     * lalu memanggil `renderTable` untuk memperbarui tampilan.
+     * PERUBAHAN LOGIKA DI SINI
+     * Memfilter array 'allRadiologyData' berdasarkan query dari kotak pencarian.
      */
     function applyFilters() {
         let filteredData = allRadiologyData;
+        
+        // 1. Ambil query langsung dari input field
+        const query = searchInput.val().toLowerCase().trim();
 
-        // Jika pencarian aktif (activeSearchRegNos adalah sebuah array), filter data utama.
-        if (activeSearchRegNos !== null) {
-            // Gunakan Set untuk pencarian yang lebih cepat (kompleksitas O(1)) dibandingkan Array.includes() (O(n)).
-            const searchIdSet = new Set(activeSearchRegNos);
-            filteredData = filteredData.filter(order => searchIdSet.has(order.reg_no));
+        // 2. Filter data berdasarkan query jika query tidak kosong
+        if (query.length > 0) {
+            filteredData = filteredData.filter(order => {
+                // Buat satu string berisi semua data yang bisa dicari per baris
+                let searchableText = [
+                    order.reg_no,
+                    order.tx_no,
+                    order.from,
+                    order.doctor,
+                    order.result_text
+                ].join(' ').toLowerCase();
+                
+                // Tambahkan 'items' ke string pencarian
+                const itemsText = order.items.join(' ').toLowerCase();
+                searchableText += ' ' + itemsText;
+                
+                // Kembalikan true jika string pencarian mengandung query
+                return searchableText.includes(query);
+            });
         }
         
-        // Render data akhir yang sudah difilter ke dalam tabel.
+        // 3. HAPUS: Logika 'activeSearchRegNos' tidak diperlukan lagi
+        // if (activeSearchRegNos !== null) { ... }
+        
+        // Render data yang sudah difilter
         renderTable(filteredData);
     }
     
-    /**
-     * Menginisialisasi atau menginisialisasi ulang event listener untuk elemen yang dibuat secara dinamis.
-     * Ini penting untuk dijalankan setelah `renderTable` selesai, karena fungsi tersebut mengganti elemen lama dengan yang baru.
-     */
     function initializeEventListeners() {
-        // Memasang event handler 'click' pada setiap gambar hasil untuk membuka modal.
-        // .off().on() mencegah event handler ganda terpasang saat render ulang.
         $('.result-image').off('click').on('click', function() {
             const imgSrc = $(this).data('image');
             $('#modalImage').attr('src', imgSrc);
@@ -333,70 +317,45 @@ $(document).ready(function() {
     // EVENT HANDLERS (PENANGANAN AKSI PENGGUNA)
     // ===================================================================================
     
-    /**
-     * Timer yang digunakan untuk menunda eksekusi fungsi pencarian (debouncing).
-     * Ini mencegah pengiriman permintaan AJAX untuk setiap ketukan tombol.
-     */
     let debounceTimer;
 
     /**
-     * Menangani event `keyup` pada kolom input pencarian.
-     * Menggunakan mekanisme debouncing untuk memicu pencarian hanya setelah pengguna berhenti mengetik.
+     * PERUBAHAN LOGIKA DI SINI
+     * Menangani event 'keyup' untuk memfilter di sisi klien (client-side).
      */
     searchInput.on('keyup', function() {
         clearTimeout(debounceTimer);
-        const query = $(this).val();
-
+        
+        // Tidak perlu panggil AJAX, cukup panggil applyFilters setelah jeda
         debounceTimer = setTimeout(function() {
-            // Jika kotak pencarian kosong, reset filter pencarian dan tampilkan semua data.
-            if (query.length === 0) {
-                activeSearchRegNos = null;
-                applyFilters();
-                return;
-            }
-            // Jika ada query, kirim ke endpoint pencarian di server.
-            $.ajax({
-                url: `{{ route('radiology.search') }}?q=${encodeURIComponent(query)}`,
-                success: function(response) {
-                    if (response.success) {
-                        // Simpan array nomor registrasi yang cocok.
-                        activeSearchRegNos = response.data;
-                        // Terapkan filter pencarian yang baru ke tampilan.
-                        applyFilters();
-                    }
-                }
-            });
+            applyFilters();
         }, 300); // Jeda 300ms setelah pengguna berhenti mengetik.
     });
 
     /**
      * Menangani event klik untuk tombol 'Refresh'.
-     * Mereset semua filter dan mengambil ulang semua data dari server.
+     * (Logika ini sudah benar)
      */
     $('#refreshBtn').on('click', function() {
         searchInput.val('');
-        activeSearchRegNos = null;
-        initialDataLoad();
+        // HAPUS: activeSearchRegNos = null;
+        initialDataLoad(); // Memuat ulang data untuk reg_no saat ini
     });
 
     /**
      * Menangani event klik untuk tombol 'Show All'.
-     * Mereset semua filter di sisi klien dan menampilkan data `allRadiologyData` yang ada di cache lokal
-     * tanpa membuat permintaan baru ke server.
+     * (Logika ini sudah benar)
      */
     $('#showAllBtn').on('click', function() {
         searchInput.val('');
-        activeSearchRegNos = null;
-        applyFilters(); // Cukup terapkan filter tanpa query aktif, maka semua data akan ditampilkan.
+        // HAPUS: activeSearchRegNos = null;
+        applyFilters(); // Terapkan filter (yang sekarang kosong)
     });
 
     // ===================================================================================
     // INISIALISASI
     // ===================================================================================
 
-    /**
-     * Panggilan fungsi awal untuk memulai proses memuat data ke halaman.
-     */
     initialDataLoad();
 });
 </script>

@@ -359,13 +359,13 @@
                                 </div>
                                 <div class="card-body p-0">
                                     <div id="radiology-iframe-container" class="iframe-container position-relative">
-                                        <iframe id="rad-iframe"
-                                                src="{{ route('radiology.imaging') }}"
-                                                frameborder="0"
-                                                style="width: 100%; height: 80vh; border: none; display: none;"
-                                                onload="this.style.display='block'"
-                                                onerror="handleIframeError('rad-iframe', 'rad-error')">
-                                        </iframe>
+                                            <iframe id="rad-iframe"
+                                                    src="{{ route('radiology.imaging', ['reg_no' => str_replace('/', '+', $patient->reg_no)]) }}"
+                                                    frameborder="0"
+                                                    style="width: 100%; height: 80vh; border: none; display: none;"
+                                                    onload="this.style.display='block'"
+                                                    onerror="handleIframeError('rad-iframe', 'rad-error')">
+                                            </iframe>
                                         <div class="iframe-error text-center py-5 d-none" id="rad-error">
                                             <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
                                             <h5>Unable to Load System</h5>
