@@ -23,8 +23,8 @@ class CreateLabolatoriumTable extends Migration
             $table->text('resultsummary')->nullable();
             $table->string('examname', 50)->nullable();
             $table->string('unit', 50)->nullable();
-            $table->string('result_comment', 50)->nullable();
-            $table->string('ressult_note', 50)->nullable();
+            $table->string('resultcomment', 50)->nullable();
+            $table->string('ressultnote', 50)->nullable();
             $table->json('createdat')->nullable();
             $table->json('updatedat')->nullable();
             $table->json('cretaeduserid');
