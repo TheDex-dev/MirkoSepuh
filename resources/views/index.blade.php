@@ -351,7 +351,7 @@
                                 <div class="card-body p-0">
                                     <div id="radiology-iframe-container" class="iframe-container position-relative">
                                     <iframe id="rad-iframe"
-                                        src="{{ route('radiology.imaging') }}"
+                                        src="{{ route('radiology.imaging', ['reg_no' => $regno]) }}"
                                         frameborder="0"
                                         style="width: 100%; height: 80vh; border: none; display: none;"
                                         onload="this.style.display='block'"
