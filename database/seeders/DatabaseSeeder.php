@@ -17,10 +17,15 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PatientsSeeder::class,
             RegistrationsSeeder::class,
-            LabOrdersSeeder::class,
-            LabResultsSeeder::class,
+            AllergySeeder::class,
+            PatientBillingSeeder::class,
+            DiagnosisSeeder::class,
             VitalSignsSeeder::class,
             RadiologyOrdersSeeder::class,
+            LabOrdersSeeder::class,
+            LabResultsSeeder::class,
+            JobOrderSeeder::class,
+            JobOrderDetailSeeder::class,
         ]);
     }
 }
