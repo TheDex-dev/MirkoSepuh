@@ -16,17 +16,22 @@ class CreateJoborderTable extends Migration
     {
         Schema::create('joborder', function (Blueprint $table) {
             $table->id('joborderid');
-            $table->unsignedBigInteger('registration');
+            $table->unsignedBigInteger('laboratoryid');
+            $table->unsignedBigInteger('radiologyid');
             $table->string('ordertype', 100)->nullable();
             $table->string('requestingdoctor', 100)->nullable();
             $table->timestamp('orderdate')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->string('status', 50)->nullable();
             $table->text('notes')->nullable();
-            $table->timestamp('createdat')->nullable();
+            $table->timestampTz('createdat')->nullable();
             $table->json('updatedat')->nullable();
             $table->json('creteduserid');
             
-            $table->foreign('registration')->references('registrationid')->on('registration')->onDelete('cascade');
+            // Note: Foreign key constraints are commented out due to circular dependency
+            // $table->foreign('laboratoryid')->references('laboratoryid')->on('laboratory');
+            // $table->foreign('radiologyid')->references('radiologyid')->on('radiologyorder');
+            $table->index('laboratoryid');
+            $table->index('radiologyid');
         });
     }
 

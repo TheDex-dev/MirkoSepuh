@@ -14,58 +14,64 @@ class JobOrderSeeder extends Seeder
      */
     public function run()
     {
+        // Create placeholder job orders first (these will be updated later)
         $jobOrders = [
             [
-                'registration' => 1,
-                'ordertype' => 'Laboratory',
-                'requestingdoctor' => 'Dr. Smith',
+                'laboratoryid' => 0, // Placeholder, will be updated after lab records are created
+                'radiologyid' => 0, // Placeholder, will be updated after radiology records are created
+                'ordertype' => 'Combined Lab & Radiology',
+                'requestingdoctor' => 'dr. AHMAD FAUZI, Sp.EM',
                 'orderdate' => now(),
                 'status' => 'Completed',
-                'notes' => 'Complete blood count requested',
+                'notes' => 'Patient 1 - Complete blood count and chest X-ray',
                 'createdat' => now(),
                 'updatedat' => json_encode([now()]),
                 'creteduserid' => json_encode(['admin'])
             ],
             [
-                'registration' => 2,
-                'ordertype' => 'Radiology',
-                'requestingdoctor' => 'Dr. Johnson',
-                'orderdate' => now(),
-                'status' => 'In Progress',
-                'notes' => 'Chest X-ray requested',
-                'createdat' => now(),
-                'updatedat' => json_encode([now()]),
-                'creteduserid' => json_encode(['admin'])
-            ],
-            [
-                'registration' => 3,
-                'ordertype' => 'Pharmacy',
-                'requestingdoctor' => 'Dr. Williams',
-                'orderdate' => now(),
-                'status' => 'Pending',
-                'notes' => 'Pain medication prescription',
-                'createdat' => now(),
-                'updatedat' => json_encode([now()]),
-                'creteduserid' => json_encode(['admin'])
-            ],
-            [
-                'registration' => 4,
-                'ordertype' => 'Consultation',
-                'requestingdoctor' => 'Dr. Brown',
-                'orderdate' => now(),
-                'status' => 'Scheduled',
-                'notes' => 'Cardiology consultation required',
-                'createdat' => now(),
-                'updatedat' => json_encode([now()]),
-                'creteduserid' => json_encode(['admin'])
-            ],
-            [
-                'registration' => 5,
-                'ordertype' => 'Laboratory',
-                'requestingdoctor' => 'Dr. Davis',
+                'laboratoryid' => 0,
+                'radiologyid' => 0,
+                'ordertype' => 'Combined Lab & Radiology',
+                'requestingdoctor' => 'dr. SITI AMINAH, Sp.PD',
                 'orderdate' => now(),
                 'status' => 'Completed',
-                'notes' => 'Blood glucose test',
+                'notes' => 'Patient 2 - Blood glucose and abdominal USG',
+                'createdat' => now(),
+                'updatedat' => json_encode([now()]),
+                'creteduserid' => json_encode(['admin'])
+            ],
+            [
+                'laboratoryid' => 0,
+                'radiologyid' => 0,
+                'ordertype' => 'Combined Lab & Radiology',
+                'requestingdoctor' => 'dr. AHMAD FAUZI, Sp.EM',
+                'orderdate' => now(),
+                'status' => 'Completed',
+                'notes' => 'Patient 3 - Liver function and knee X-ray',
+                'createdat' => now(),
+                'updatedat' => json_encode([now()]),
+                'creteduserid' => json_encode(['admin'])
+            ],
+            [
+                'laboratoryid' => 0,
+                'radiologyid' => 0,
+                'ordertype' => 'Combined Lab & Radiology',
+                'requestingdoctor' => 'dr. RATNA SARI, Sp.OG',
+                'orderdate' => now(),
+                'status' => 'Completed',
+                'notes' => 'Patient 4 - Hemoglobin and obstetric USG',
+                'createdat' => now(),
+                'updatedat' => json_encode([now()]),
+                'creteduserid' => json_encode(['admin'])
+            ],
+            [
+                'laboratoryid' => 0,
+                'radiologyid' => 0,
+                'ordertype' => 'Combined Lab & Radiology',
+                'requestingdoctor' => 'dr. HENDRA GUNAWAN, Sp.B',
+                'orderdate' => now(),
+                'status' => 'Completed',
+                'notes' => 'Patient 5 - Prenatal screening and abdominal CT',
                 'createdat' => now(),
                 'updatedat' => json_encode([now()]),
                 'creteduserid' => json_encode(['admin'])

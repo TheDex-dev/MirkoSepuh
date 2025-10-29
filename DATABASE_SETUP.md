@@ -1,98 +1,194 @@
-# Database Setup Guide
+-- =============================================
+-- Simplified PostgreSQL Schema
+-- Based on pg_dump: ulemmirko_tanggal28
+-- All tables, sequences, constraints, and relationships included
+-- No data, no session settings, no comments
+-- =============================================
 
-This guide explains the migration files and seeders created for the MirkoSepuh database.
+-- Schema
+CREATE SCHEMA IF NOT EXISTS public;
+ALTER SCHEMA public OWNER TO pg_database_owner;
 
-## Migration Files Created
+-- Table: patient
+CREATE TABLE public.patient (
+    patientid integer PRIMARY KEY,
+    mrn varchar(20) UNIQUE NOT NULL,
+    fullname varchar(100) NOT NULL,
+    dateofbirth date,
+    gender varchar(10),
+    guarantor varchar(100),
+    phonenumber varchar(20),
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.patients_patient_id_seq OWNED BY public.patient.patientid;
+ALTER TABLE public.patient ALTER COLUMN patientid SET DEFAULT nextval('public.patients_patient_id_seq');
+ALTER TABLE public.patient OWNER TO postgres;
 
-All migration files are located in `database/migrations/` and include:
+-- Table: registration
+CREATE TABLE public.registration (
+    registrationid integer PRIMARY KEY,
+    patientid integer NOT NULL REFERENCES public.patient(patientid) ON DELETE CASCADE,
+    registrationnumber varchar(30) UNIQUE NOT NULL,
+    registrationdate timestamp NOT NULL,
+    patientclass varchar(50),
+    attendingdoctor varchar(100),
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.registrations_registration_id_seq OWNED BY public.registration.registrationid;
+ALTER TABLE public.registration ALTER COLUMN registrationid SET DEFAULT nextval('public.registrations_registration_id_seq');
+ALTER TABLE public.registration OWNER TO postgres;
 
-1. **create_patient_table** - Patient master data
-2. **create_registration_table** - Patient registration records
-3. **create_allergy_table** - Patient allergies
-4. **create_patientbilling_table** - Patient billing information
-5. **create_diagnosis_table** - Patient diagnosis records
-6. **create_vitalsign_table** - Vital signs measurements
-7. **create_radiologyorder_table** - Radiology orders
-8. **create_labolatorium_table** - Laboratory orders and results
-9. **create_joborder_table** - Job orders
-10. **create_joborderdetail_table** - Job order details
+-- Table: patientbilling
+CREATE TABLE public.patientbilling (
+    billingid integer PRIMARY KEY,
+    patientid integer UNIQUE NOT NULL REFERENCES public.patient(patientid),
+    plafond numeric(15,2) DEFAULT 0,
+    totalbilling numeric(15,2) DEFAULT 0,
+    difference numeric(15,2) DEFAULT 0,
+    lastupdated timestamp DEFAULT CURRENT_TIMESTAMP,
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.patient_billing_billing_id_seq OWNED BY public.patientbilling.billingid;
+ALTER TABLE public.patientbilling ALTER COLUMN billingid SET DEFAULT nextval('public.patient_billing_billing_id_seq');
+ALTER TABLE public.patientbilling OWNER TO postgres;
 
-## Seeder Files Created
+-- Table: allergy
+CREATE TABLE public.allergy (
+    allergyid integer PRIMARY KEY,
+    patientid integer NOT NULL REFERENCES public.patient(patientid) ON DELETE CASCADE,
+    allergyname varchar(255) NOT NULL,
+    recordeddate date DEFAULT CURRENT_DATE,
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.allergies_allergy_id_seq OWNED BY public.allergy.allergyid;
+ALTER TABLE public.allergy ALTER COLUMN allergyid SET DEFAULT nextval('public.allergies_allergy_id_seq');
+ALTER TABLE public.allergy OWNER TO postgres;
 
-All seeder files are located in `database/seeders/` and include:
+-- Table: diagnosis
+CREATE TABLE public.diagnosis (
+    diagnosisid integer PRIMARY KEY,
+    patientid integer NOT NULL REFERENCES public.patient(patientid),
+    diagnosistype varchar(50),
+    diagnosiscode varchar(20),
+    description text NOT NULL,
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.diagnoses_diagnosis_id_seq OWNED BY public.diagnosis.diagnosisid;
+ALTER TABLE public.diagnosis ALTER COLUMN diagnosisid SET DEFAULT nextval('public.diagnoses_diagnosis_id_seq');
+ALTER TABLE public.diagnosis OWNER TO postgres;
 
-### Existing Seeders (already in project):
-- `PatientsSeeder` - Seeds patient data
-- `RegistrationsSeeder` - Seeds registration data
-- `LabOrdersSeeder` - Seeds lab orders
-- `LabResultsSeeder` - Seeds lab results
-- `VitalSignsSeeder` - Seeds vital signs
-- `RadiologyOrdersSeeder` - Seeds radiology orders
+-- Table: vitalsign
+CREATE TABLE public.vitalsign (
+    vitalid integer PRIMARY KEY,
+    patientid integer NOT NULL REFERENCES public.patient(patientid),
+    measurementname varchar(50) NOT NULL,
+    measurementvalue varchar(50) NOT NULL,
+    measurementtime timestamp NOT NULL,
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.vital_signs_vitals_id_seq OWNED BY public.vitalsign.vitalid;
+ALTER TABLE public.vitalsign ALTER COLUMN vitalid SET DEFAULT nextval('public.vital_signs_vitals_id_seq');
+ALTER TABLE public.vitalsign OWNER TO postgres;
 
-### New Seeders Created:
-- `AllergySeeder` - Seeds allergy data with sample patient allergies
-- `PatientBillingSeeder` - Seeds billing data with plafond and billing amounts
-- `DiagnosisSeeder` - Seeds diagnosis data with ICD codes
-- `JobOrderSeeder` - Seeds job orders for various services
-- `JobOrderDetailSeeder` - Seeds job order details with services and prices
+-- Table: radiologyorder
+CREATE TABLE public.radiologyorder (
+    radiologyid integer PRIMARY KEY,
+    patientid integer NOT NULL REFERENCES public.patient(patientid),
+    orderdate timestamp NOT NULL,
+    procedurename varchar(255) NOT NULL,
+    requestingdoctor varchar(100),
+    status varchar(50) DEFAULT 'Ordered',
+    resultsummary text,
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL,
+    joborderid integer NOT NULL
+);
+CREATE SEQUENCE public.radiology_orders_order_id_seq OWNED BY public.radiologyorder.radiologyid;
+ALTER TABLE public.radiologyorder ALTER COLUMN radiologyid SET DEFAULT nextval('public.radiology_orders_order_id_seq');
+CREATE INDEX fki_patientid ON public.radiologyorder (patientid);
+ALTER TABLE public.radiologyorder OWNER TO postgres;
 
-## How to Run Migrations and Seeders
+-- Table: laboratory
+CREATE TABLE public.laboratory (
+    laboratoryid integer PRIMARY KEY,
+    patientid integer NOT NULL REFERENCES public.patient(patientid),
+    orderdate timestamp NOT NULL,
+    procedurename varchar(255) NOT NULL,
+    requestingdoctor varchar(100),
+    status varchar(50) DEFAULT 'Ordered',
+    resultsummary text,
+    examname varchar(50),
+    unit varchar(50),
+    resultcomment varchar(50),
+    resultnote varchar(50),
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL,
+    joboredrid integer NOT NULL
+);
+CREATE SEQUENCE public.labotaratory_order_id_seq OWNED BY public.laboratory.laboratoryid;
+ALTER TABLE public.laboratory ALTER COLUMN laboratoryid SET DEFAULT nextval('public.labotaratory_order_id_seq');
+ALTER TABLE public.laboratory OWNER TO postgres;
 
-### Step 1: Run Migrations
-```bash
-php artisan migrate
-```
+-- Table: joborder
+CREATE TABLE public.joborder (
+    joborderid integer PRIMARY KEY,
+    laboratoryid integer NOT NULL REFERENCES public.laboratory(laboratoryid),
+    radiologyid integer NOT NULL REFERENCES public.radiologyorder(radiologyid),
+    ordertype varchar(100),
+    requestingdoctor varchar(100),
+    orderdate timestamp DEFAULT CURRENT_TIMESTAMP,
+    status varchar(50),
+    notes text,
+    createdat timestamptz,
+    updatedat timestamp[],
+    creteduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.joborder_joborderid_seq OWNED BY public.joborder.joborderid;
+ALTER TABLE public.joborder ALTER COLUMN joborderid SET DEFAULT nextval('public.joborder_joborderid_seq');
+CREATE INDEX fki_laboratory_fk ON public.joborder (laboratoryid);
+CREATE INDEX fki_radiology_fk ON public.joborder (radiologyid);
+ALTER TABLE public.joborder OWNER TO postgres;
 
-This will create all the database tables based on the migration files.
+-- Table: joborderdetail
+CREATE TABLE public.joborderdetail (
+    joborderdetailid integer PRIMARY KEY,
+    joborderid integer NOT NULL REFERENCES public.joborder(joborderid) ON DELETE CASCADE,
+    servicecode varchar(50),
+    servicename varchar(255) NOT NULL,
+    quantity integer DEFAULT 1,
+    price numeric(15,2) DEFAULT 0,
+    resultvalue text,
+    status varchar(50),
+    createdat timestamptz[],
+    updatedat timestamptz[],
+    createduserid varchar(100)[] NOT NULL
+);
+CREATE SEQUENCE public.joborderdetail_joborderdetailid_seq OWNED BY public.joborderdetail.joborderdetailid;
+ALTER TABLE public.joborderdetail ALTER COLUMN joborderdetailid SET DEFAULT nextval('public.joborderdetail_joborderdetailid_seq');
+ALTER TABLE public.joborderdetail OWNER TO postgres;
 
-### Step 2: Run Seeders
-```bash
-php artisan db:seed
-```
-
-This will populate the tables with test data in the correct order to respect foreign key constraints.
-
-### Alternative: Migrate and Seed in One Command
-```bash
-php artisan migrate:fresh --seed
-```
-
-⚠️ **Warning**: This command will drop all tables and recreate them with fresh data. Use only in development!
-
-## Database Structure
-
-### Main Tables and Relationships
-
-- **patient** (1) → (many) **registration**
-- **patient** (1) → (many) **allergy**
-- **registration** (1) → (1) **patientbilling**
-- **registration** (1) → (many) **diagnosis**
-- **registration** (1) → (many) **vitalsign**
-- **registration** (1) → (many) **radiologyorder**
-- **registration** (1) → (many) **labolatorium**
-- **registration** (1) → (many) **joborder**
-- **joborder** (1) → (many) **joborderdetail**
-
-## Sample Data Overview
-
-The seeders create sample data for testing:
-- 5 sample allergy records
-- 5 sample billing records with realistic amounts
-- 6 sample diagnosis records with ICD-10 codes
-- 5 sample job orders (Laboratory, Radiology, Pharmacy, Consultation)
-- 6 sample job order details with services and prices
-
-## Notes
-
-1. All tables use JSON fields for `createdat`, `updatedat`, and `createduserid` to match the PostgreSQL array types in the original SQL.
-2. Foreign keys are set with `onDelete('cascade')` to maintain referential integrity.
-3. The seeding order in `DatabaseSeeder.php` respects foreign key constraints.
-4. Make sure your `.env` file is properly configured with your database credentials before running migrations.
-
-## Troubleshooting
-
-If you encounter errors:
-1. Check that your database connection is properly configured in `.env`
-2. Ensure the database exists before running migrations
-3. If migrations fail, run `php artisan migrate:rollback` and try again
-4. Check the Laravel log files in `storage/logs/` for detailed error messages
+-- Reset sequences to start at 1
+SELECT setval('public.patients_patient_id_seq', 1, false);
+SELECT setval('public.registrations_registration_id_seq', 1, false);
+SELECT setval('public.patient_billing_billing_id_seq', 1, false);
+SELECT setval('public.allergies_allergy_id_seq', 1, false);
+SELECT setval('public.diagnoses_diagnosis_id_seq', 1, false);
+SELECT setval('public.vital_signs_vitals_id_seq', 1, false);
+SELECT setval('public.radiology_orders_order_id_seq', 1, false);
+SELECT setval('public.labotaratory_order_id_seq', 1, false);
+SELECT setval('public.joborder_joborderid_seq', 1, false);
+SELECT setval('public.joborderdetail_joborderdetailid_seq', 1, false);

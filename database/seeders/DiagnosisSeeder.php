@@ -16,7 +16,7 @@ class DiagnosisSeeder extends Seeder
     {
         $diagnoses = [
             [
-                'registrationid' => 1,
+                'patientid' => 1,
                 'diagnosistype' => 'Primary',
                 'diagnosiscode' => 'J18.9',
                 'description' => 'Pneumonia, unspecified organism',
@@ -25,7 +25,7 @@ class DiagnosisSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 1,
+                'patientid' => 1,
                 'diagnosistype' => 'Secondary',
                 'diagnosiscode' => 'I10',
                 'description' => 'Essential (primary) hypertension',
@@ -34,7 +34,7 @@ class DiagnosisSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 2,
+                'patientid' => 2,
                 'diagnosistype' => 'Primary',
                 'diagnosiscode' => 'E11.9',
                 'description' => 'Type 2 diabetes mellitus without complications',
@@ -43,7 +43,7 @@ class DiagnosisSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 3,
+                'patientid' => 3,
                 'diagnosistype' => 'Primary',
                 'diagnosiscode' => 'M54.5',
                 'description' => 'Low back pain',
@@ -52,7 +52,7 @@ class DiagnosisSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 4,
+                'patientid' => 4,
                 'diagnosistype' => 'Primary',
                 'diagnosiscode' => 'K21.9',
                 'description' => 'Gastro-esophageal reflux disease without esophagitis',
@@ -61,7 +61,7 @@ class DiagnosisSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 5,
+                'patientid' => 5,
                 'diagnosistype' => 'Primary',
                 'diagnosiscode' => 'S06.0',
                 'description' => 'Concussion',

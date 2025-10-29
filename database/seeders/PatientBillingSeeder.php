@@ -16,7 +16,7 @@ class PatientBillingSeeder extends Seeder
     {
         $billings = [
             [
-                'registrationid' => 1,
+                'patientid' => 1,
                 'plafond' => 10000000.00,
                 'totalbilling' => 2500000.00,
                 'difference' => 7500000.00,
@@ -26,7 +26,7 @@ class PatientBillingSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 2,
+                'patientid' => 2,
                 'plafond' => 15000000.00,
                 'totalbilling' => 5000000.00,
                 'difference' => 10000000.00,
@@ -36,7 +36,7 @@ class PatientBillingSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 3,
+                'patientid' => 3,
                 'plafond' => 8000000.00,
                 'totalbilling' => 3200000.00,
                 'difference' => 4800000.00,
@@ -46,7 +46,7 @@ class PatientBillingSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 4,
+                'patientid' => 4,
                 'plafond' => 12000000.00,
                 'totalbilling' => 7800000.00,
                 'difference' => 4200000.00,
@@ -56,7 +56,7 @@ class PatientBillingSeeder extends Seeder
                 'createduserid' => json_encode(['admin'])
             ],
             [
-                'registrationid' => 5,
+                'patientid' => 5,
                 'plafond' => 20000000.00,
                 'totalbilling' => 15000000.00,
                 'difference' => 5000000.00,

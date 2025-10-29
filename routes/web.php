@@ -11,6 +11,10 @@ Route::get('/emr/{reg_no}', [EmrController::class, 'show'])
     ->name('emr.show')
     ->where('reg_no', '.*'); // Allow any character
 
+// EMR API Route - Get patient data by registration number
+Route::post('/emr/findPatient', [EmrController::class, 'findPatient'])
+    ->name('emr.findPatient');
+
 // Laboratory Routes - Use + for slashes in URL
 Route::get('/examOrder/laboratory/{reg_no}', [LaboratoryController::class, 'index'])
     ->name('laboratory')

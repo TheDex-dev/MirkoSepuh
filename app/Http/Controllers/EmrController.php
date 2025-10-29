@@ -33,13 +33,14 @@ class EmrController extends Controller
         // Ambil data registrasi + pasien
         $registration = DB::table('registration as r')
             ->join('patient as p', 'r.patientid', '=', 'p.patientid')
-            ->leftJoin('patientbilling as b', 'r.registrationid', '=', 'b.registrationid')
+            ->leftJoin('patientbilling as b', 'p.patientid', '=', 'b.patientid')
             ->select(
                 'r.registrationid',
                 'r.registrationnumber',
                 'r.registrationdate',
                 'r.patientclass as unit',
                 'r.attendingdoctor as physician',
+                'p.patientid',
                 'p.mrn',
                 'p.fullname as name',
                 'p.dateofbirth as dob',
@@ -68,23 +69,23 @@ class EmrController extends Controller
 
         // Ambil diagnosis (pisahkan main & secondary)
         $diagnoses = DB::table('diagnosis')
-            ->where('registrationid', $registration->registrationid)
+            ->where('patientid', $registration->patientid)
             ->get();
 
         $mainDiagnosis = '';
         $secondaryDiagnosis = '';
 
         foreach ($diagnoses as $diag) {
-            if (strtolower($diag->diagnosistype) === 'main') {
+            if (strtolower($diag->diagnosistype) === 'primary') {
                 $mainDiagnosis = $diag->description;
-            } else {
+            } elseif (strtolower($diag->diagnosistype) === 'secondary') {
                 $secondaryDiagnosis = $diag->description;
             }
         }
 
         // Ambil vital signs
         $vitalSigns = DB::table('vitalsign')
-            ->where('registrationid', $registration->registrationid)
+            ->where('patientid', $registration->patientid)
             ->orderBy('measurementtime', 'desc')
             ->limit(10)
             ->get()

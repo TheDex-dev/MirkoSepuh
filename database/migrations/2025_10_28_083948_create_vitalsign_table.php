@@ -15,7 +15,7 @@ class CreateVitalsignTable extends Migration
     {
         Schema::create('vitalsign', function (Blueprint $table) {
             $table->id('vitalid');
-            $table->unsignedBigInteger('registrationid');
+            $table->unsignedBigInteger('patientid');
             $table->string('measurementname', 50);
             $table->string('measurementvalue', 50);
             $table->timestamp('measurementtime');
@@ -23,7 +23,7 @@ class CreateVitalsignTable extends Migration
             $table->json('updatedat')->nullable();
             $table->json('createduserid');
             
-            $table->foreign('registrationid')->references('registrationid')->on('registration')->onDelete('cascade');
+            $table->foreign('patientid')->references('patientid')->on('patient');
         });
     }
 

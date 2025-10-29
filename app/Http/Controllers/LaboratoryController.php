@@ -30,9 +30,9 @@ class LaboratoryController extends Controller
         // Convert URL format back to database format
         $reg_no = str_replace('+', '/', $reg_no);
         
-        // Get patient_id from registration
-        $registration = DB::table('registrations')
-            ->where('reg_no', $reg_no)
+        // Get registration by registration number
+        $registration = DB::table('registration')
+            ->where('registrationnumber', $reg_no)
             ->first();
         
         if (!$registration) {
@@ -42,30 +42,23 @@ class LaboratoryController extends Controller
             ], 404);
         }
         
-        // Get all lab orders for this patient
-        $orders = DB::table('lab_orders')
-            ->where('patient_id', $registration->patient_id)
-            ->orderBy('order_date', 'desc')
+        // Get all lab orders for this patient (not just this registration)
+        $orders = DB::table('laboratory')
+            ->where('patientid', $registration->patientid)
+            ->orderBy('orderdate', 'desc')
             ->get()
             ->map(function ($order) {
-                // Parse items array if stored as PostgreSQL array or JSON
-                $items = $order->items;
-                if (is_string($items)) {
-                    // Handle PostgreSQL array format {item1,item2}
-                    $items = str_replace(['{', '}'], '', $items);
-                    $items = explode(',', $items);
-                }
-                
                 return [
-                    'id' => $order->lab_id,
-                    'date' => date('d/m/Y H:i', strtotime($order->order_date)),
-                    'req_no' => $order->reg_no,
-                    'tx_no' => $order->tx_no,
-                    'from' => $order->from_unit,
-                    'doctor' => $order->doctor,
-                    'urgent' => $order->urgent,
-                    'items' => $items,
-                    'price' => $order->price
+                    'id' => $order->laboratoryid,
+                    'date' => date('d/m/Y H:i', strtotime($order->orderdate)),
+                    'procedure' => $order->procedurename,
+                    'doctor' => $order->requestingdoctor,
+                    'status' => $order->status,
+                    'exam' => $order->examname,
+                    'unit' => $order->unit,
+                    'result' => $order->resultsummary,
+                    'comment' => $order->resultcomment,
+                    'note' => $order->resultnote
                 ];
             });
         
@@ -81,48 +74,35 @@ class LaboratoryController extends Controller
      */
     public function results($lab_id)
     {
-        // Get lab results grouped by group_name
-        $results = DB::table('lab_results')
-            ->where('lab_id', $lab_id)
-            ->orderBy('group_name')
-            ->orderBy('test_name')
-            ->get();
+        // Get lab order with all details
+        $order = DB::table('laboratory')
+            ->where('laboratoryid', $lab_id)
+            ->first();
         
-        if ($results->isEmpty()) {
+        if (!$order) {
             return response()->json([
-                'success' => true,
-                'data' => []
-            ]);
+                'success' => false,
+                'message' => 'Laboratory order not found'
+            ], 404);
         }
         
-        // Group results by group_name
-        $groupedResults = [];
-        foreach ($results as $result) {
-            $groupName = $result->group_name ?: 'General';
-            
-            if (!isset($groupedResults[$groupName])) {
-                $groupedResults[$groupName] = [
-                    'group' => $groupName,
-                    'tests' => []
-                ];
-            }
-            
-            $groupedResults[$groupName]['tests'][] = [
-                'id' => $result->result_id,
-                'name' => $result->test_name,
-                'result_date' => date('d/m/Y H:i', strtotime($result->result_date)),
-                'flag' => $result->flag,
-                'result' => $result->result_value,
-                'unit' => $result->unit,
-                'standard_value' => $result->standard_value,
-                'result_comment' => $result->result_comment,
-                'result_note' => $result->result_note
-            ];
-        }
+        // Return the laboratory order details
+        $result = [
+            'id' => $order->laboratoryid,
+            'procedure' => $order->procedurename,
+            'exam' => $order->examname,
+            'date' => date('d/m/Y H:i', strtotime($order->orderdate)),
+            'doctor' => $order->requestingdoctor,
+            'status' => $order->status,
+            'result' => $order->resultsummary,
+            'unit' => $order->unit,
+            'comment' => $order->resultcomment,
+            'note' => $order->resultnote
+        ];
         
         return response()->json([
             'success' => true,
-            'data' => array_values($groupedResults)
+            'data' => $result
         ]);
     }
     
@@ -135,27 +115,27 @@ class LaboratoryController extends Controller
         $query = $request->input('q', '');
         
         if (empty($query)) {
-            // Return all available result IDs
-            $resultIds = DB::table('lab_results')
-                ->pluck('result_id')
+            // Return all available order IDs
+            $orderIds = DB::table('laboratory')
+                ->pluck('laboratoryid')
                 ->toArray();
             
             return response()->json([
                 'success' => true,
-                'data' => $resultIds
+                'data' => $orderIds
             ]);
         }
         
-        // Search in test names
-        $resultIds = DB::table('lab_results')
-            ->where('test_name', 'ILIKE', '%' . $query . '%')
-            ->orWhere('group_name', 'ILIKE', '%' . $query . '%')
-            ->pluck('result_id')
+        // Search in procedure names and exam names
+        $orderIds = DB::table('laboratory')
+            ->where('procedurename', 'ILIKE', '%' . $query . '%')
+            ->orWhere('examname', 'ILIKE', '%' . $query . '%')
+            ->pluck('laboratoryid')
             ->toArray();
         
         return response()->json([
             'success' => true,
-            'data' => $resultIds
+            'data' => $orderIds
         ]);
     }
     
@@ -165,40 +145,35 @@ class LaboratoryController extends Controller
      */
     public function testByDate($lab_id)
     {
-        $results = DB::table('lab_results')
-            ->where('lab_id', $lab_id)
-            ->orderBy('group_name')
-            ->orderBy('test_name')
-            ->get();
+        // Get lab order with all details
+        $order = DB::table('laboratory')
+            ->where('laboratoryid', $lab_id)
+            ->first();
         
-        // Group results by group_name
-        $groupedResults = [];
-        foreach ($results as $result) {
-            $groupName = $result->group_name ?: 'General';
-            
-            if (!isset($groupedResults[$groupName])) {
-                $groupedResults[$groupName] = [
-                    'group' => $groupName,
-                    'tests' => []
-                ];
-            }
-            
-            $groupedResults[$groupName]['tests'][] = [
-                'id' => $result->result_id,
-                'name' => $result->test_name,
-                'result_date' => date('d/m/Y H:i', strtotime($result->result_date)),
-                'flag' => $result->flag,
-                'result' => $result->result_value,
-                'unit' => $result->unit,
-                'standard_value' => $result->standard_value,
-                'result_comment' => $result->result_comment,
-                'result_note' => $result->result_note
-            ];
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Laboratory order not found'
+            ], 404);
         }
+        
+        // Return the laboratory order details
+        $result = [
+            'id' => $order->laboratoryid,
+            'procedure' => $order->procedurename,
+            'exam' => $order->examname,
+            'date' => date('d/m/Y H:i', strtotime($order->orderdate)),
+            'doctor' => $order->requestingdoctor,
+            'status' => $order->status,
+            'result' => $order->resultsummary,
+            'unit' => $order->unit,
+            'comment' => $order->resultcomment,
+            'note' => $order->resultnote
+        ];
         
         return response()->json([
             'success' => true,
-            'data' => array_values($groupedResults),
+            'data' => $result,
             'order_id' => $lab_id
         ]);
     }

@@ -14,8 +14,8 @@ class CreateRadiologyorderTable extends Migration
     public function up()
     {
         Schema::create('radiologyorder', function (Blueprint $table) {
-            $table->id('orderid');
-            $table->unsignedBigInteger('registrationid');
+            $table->id('radiologyid');
+            $table->unsignedBigInteger('patientid');
             $table->timestamp('orderdate');
             $table->string('procedurename', 255);
             $table->string('requestingdoctor', 100)->nullable();
@@ -24,8 +24,10 @@ class CreateRadiologyorderTable extends Migration
             $table->json('createdat')->nullable();
             $table->json('updatedat')->nullable();
             $table->json('createduserid');
+            $table->unsignedBigInteger('joborderid');
             
-            $table->foreign('registrationid')->references('registrationid')->on('registration')->onDelete('cascade');
+            $table->foreign('patientid')->references('patientid')->on('patient');
+            $table->index('patientid');
         });
     }
 

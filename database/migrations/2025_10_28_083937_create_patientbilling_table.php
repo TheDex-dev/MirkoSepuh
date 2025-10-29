@@ -16,7 +16,7 @@ class CreatePatientbillingTable extends Migration
     {
         Schema::create('patientbilling', function (Blueprint $table) {
             $table->id('billingid');
-            $table->unsignedBigInteger('registrationid')->unique();
+            $table->unsignedBigInteger('patientid')->unique();
             $table->decimal('plafond', 15, 2)->default(0);
             $table->decimal('totalbilling', 15, 2)->default(0);
             $table->decimal('difference', 15, 2)->default(0);
@@ -25,7 +25,7 @@ class CreatePatientbillingTable extends Migration
             $table->json('updatedat')->nullable();
             $table->json('createduserid');
             
-            $table->foreign('registrationid')->references('registrationid')->on('registration')->onDelete('cascade');
+            $table->foreign('patientid')->references('patientid')->on('patient');
         });
     }
 

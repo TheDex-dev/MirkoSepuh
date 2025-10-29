@@ -15,7 +15,7 @@ class CreateDiagnosisTable extends Migration
     {
         Schema::create('diagnosis', function (Blueprint $table) {
             $table->id('diagnosisid');
-            $table->unsignedBigInteger('registrationid');
+            $table->unsignedBigInteger('patientid');
             $table->string('diagnosistype', 50)->nullable();
             $table->string('diagnosiscode', 20)->nullable();
             $table->text('description');
@@ -23,7 +23,7 @@ class CreateDiagnosisTable extends Migration
             $table->json('updatedat')->nullable();
             $table->json('createduserid');
             
-            $table->foreign('registrationid')->references('registrationid')->on('registration')->onDelete('cascade');
+            $table->foreign('patientid')->references('patientid')->on('patient');
         });
     }
 

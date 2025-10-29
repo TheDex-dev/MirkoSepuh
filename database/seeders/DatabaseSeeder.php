@@ -21,9 +21,10 @@ class DatabaseSeeder extends Seeder
             PatientBillingSeeder::class,
             DiagnosisSeeder::class,
             VitalSignsSeeder::class,
+            JobOrderSeeder::class,
             RadiologyOrdersSeeder::class,
             LabOrdersSeeder::class,
-            JobOrderSeeder::class,
+            UpdateJobOrderReferencesSeeder::class, // Update job order references after lab and radiology are created
             JobOrderDetailSeeder::class,
         ]);
     }
